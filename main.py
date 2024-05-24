@@ -1,0 +1,3 @@
+from papers.multiresolutional_hashencoding.model import MultiresolutionalHashEncoding
+
+print(MultiresolutionalHashEncoding())
