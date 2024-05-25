@@ -94,7 +94,6 @@ dependencies = [
     "channels[daphne]>=4.1.0",
     "fiftyone>=0.23.8",
     "datasets<2.19",
-    "kaggle<1.6.12",
     "online-judge-tools>=11.5.1",
     "ray>=2.11.0",
     "line-bot-sdk<=3.11.0",
@@ -125,6 +124,7 @@ dependencies = [
     "maturin>=1.5.1",
     "timm>=1.0.3",
     "torchprofile>=0.0.4",
+    "kaggle<=1.6",
 ]
 readme = "README.md"
 requires-python = ">= 3.8"
