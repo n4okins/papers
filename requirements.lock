@@ -1527,6 +1527,8 @@ torchaudio==2.2.2+cu121
     # via papers
 torchdata==0.7.1
     # via dgl
+torchinfo==1.8.0
+    # via papers
 torchmetrics==1.0.3
     # via lightning
     # via pytorch-lightning

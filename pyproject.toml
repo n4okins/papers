@@ -1,7 +1,7 @@
 [project]
 name = "papers"
 version = "0.1.0"
-description = "Add your description here"
+description = "大体基本的なの全部入り"
 authors = [
     { name = "n4okins", email = "63445867+n4okins@users.noreply.github.com" }
 ]
@@ -125,6 +125,7 @@ dependencies = [
     "timm>=1.0.3",
     "torchprofile>=0.0.4",
     "kaggle<=1.6",
+    "torchinfo>=1.8.0",
 ]
 readme = "README.md"
 requires-python = ">= 3.8"

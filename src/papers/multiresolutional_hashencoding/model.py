@@ -11,6 +11,7 @@ https://arxiv.org/abs/2201.05989
 https://github.com/NVlabs/instant-ngp
 """
 
+
 class MultiresolutionalHashEncoding(nn.Module):
     def __init__(
         self,
@@ -86,3 +87,130 @@ class MultiresolutionalHashEncoding(nn.Module):
             f = F.interpolate(f, (h, w), mode=self.interpolation)
             fs[:, level * self.feature_dim : (level + 1) * self.feature_dim] = f
         return fs
+
+
+if __name__ == "__main__":
+    from pathlib import Path
+
+    import torch.nn as nn
+    import torch.nn.functional as F
+    import torch.optim as optim
+    import torchvision.transforms as TF
+    from PIL import Image
+    from tqdm.auto import tqdm
+
+    class Model(nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.encoder = MultiresolutionalHashEncoding(
+                n_min=4, n_max=512, mod_t=2**14
+            )
+            self.decoder = nn.Sequential(
+                nn.Conv2d(48, 48, 3, 1, 1),
+                nn.BatchNorm2d(48),
+                nn.ReLU(),
+                nn.Conv2d(48, 48, 1),
+                nn.ReLU(),
+                nn.Conv2d(48, 3, 1),
+                nn.Sigmoid(),
+            )
+
+        def forward(self, x):
+            x = self.encoder(x)
+            x = self.decoder(x)
+            return x
+
+    im_dir = Path("/media/n4okins/WDC8TBNTFS/ImageNet/ILSVRC/Data/CLS-LOC/train")
+
+    for im_name in [
+        "n01796340/n01796340_218.JPEG",
+        "n01871265/n01871265_116.JPEG",
+    ]:
+        im_path = im_dir / im_name
+
+        fig_dir = Path(__file__).parent / "figs" / im_path.stem
+        fig_dir.mkdir(exist_ok=True, parents=True)
+        model = Model()
+        transform = TF.Compose(
+            [
+                TF.Resize((512, 512)),
+                TF.ToTensor(),
+            ]
+        )
+        image = Image.open(im_path).convert("RGB")
+        image = transform(image).unsqueeze(0)
+
+        origin = Image.fromarray(
+            (image[0].permute(1, 2, 0).numpy() * 255).astype("uint8")
+        )
+        origin.save(fig_dir / "original.png")
+
+        model = model.to("cuda")
+        model.train()
+
+        image = image.to("cuda")
+
+        optimizer = torch.optim.Adam(
+            [
+                {"params": model.encoder.parameters()},
+                {"params": model.decoder.parameters(), "weight_decay": 1e-6},
+            ],
+            lr=0.01,
+            betas=(0.9, 0.99),
+            eps=1e-15,
+        )
+
+        for e in tqdm(range(100)):
+            optimizer.zero_grad()
+            out = model(image)
+            loss = F.mse_loss(out, image)
+            loss.backward()
+            optimizer.step()
+            TF.ToPILImage()(out[0].cpu()).save(fig_dir / f"{e:04}.png")
+
+    for im_name in [
+        "n01796340/n01796340_218.JPEG",
+        "n01871265/n01871265_116.JPEG",
+    ]:
+        im_path = im_dir / im_name
+
+        fig_dir = Path(__file__).parent / "figs" / f"{im_path.stem}_noise"
+        fig_dir.mkdir(exist_ok=True, parents=True)
+        model = Model()
+        transform = TF.Compose(
+            [
+                TF.Resize((512, 512)),
+                TF.ToTensor(),
+            ]
+        )
+        image = Image.open(im_path).convert("RGB")
+        image = transform(image).unsqueeze(0)
+        mask = torch.rand((512, 512)) < 0.1
+        origin = Image.fromarray(
+            ((image * mask)[0].permute(1, 2, 0).numpy() * 255).astype("uint8")
+        )
+        origin.save(fig_dir / "original.png")
+
+        model = model.to("cuda")
+        mask = mask.to("cuda")
+        image = image.to("cuda")
+
+        model.train()
+
+        optimizer = torch.optim.Adam(
+            [
+                {"params": model.encoder.parameters()},
+                {"params": model.decoder.parameters(), "weight_decay": 1e-6},
+            ],
+            lr=0.01,
+            betas=(0.9, 0.99),
+            eps=1e-15,
+        )
+
+        for e in tqdm(range(100)):
+            optimizer.zero_grad()
+            out = model(image)
+            loss = F.mse_loss(out * mask, image * mask)
+            loss.backward()
+            optimizer.step()
+            TF.ToPILImage()(out[0].cpu()).save(fig_dir / f"{e:04}.png")
