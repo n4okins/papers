@@ -5848,14 +5848,18 @@ def is_env_notebook():
 
 def get_args() -> TypedArgs:
     if is_env_notebook():
+        # For Jupyter Notebook
+        # Please set the path to the ImageNet dataset
+        imagenet_dir = "/path/to/imagenet"
+
         args = TypedArgs(
-            data_dir=Path("/media/n4okins/WDC8TBNTFS/ImageNet/ILSVRC/Data/CLS-LOC/"),
+            data_dir=imagenet_dir,
             model_path=Path(__file__).parent / "models/vig_s_80.6.pth",
             seed=None,
         )
     else:
         parser = argparse.ArgumentParser()
-        parser.add_argument("--data_dir", type=Path, default="/media/n4okins/WDC8TBNTFS/ImageNet/ILSVRC/Data/CLS-LOC/") # /path/to/imagenet/
+        parser.add_argument("dir", metavar="data_dir", type=Path)
         parser.add_argument("--model_type", default="vig", type=str)
         parser.add_argument("--model_path", type=Path, default=Path(__file__).parent / "models/vig_s_80.6.pth")
         parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
@@ -5879,7 +5883,7 @@ def get_args() -> TypedArgs:
         parser.add_argument("--emb_dims", default=1024, type=int)
         args = TypedArgs.from_argparse(parser.parse_args())
 
-    assert args.data_dir.exists(), f"Data directory {args.data_dir} does not exist"
+    assert args.dir.exists(), f"Data directory {args.dir} does not exist"
     assert args.model_path.exists(), f"Model path {args.model_path} does not exist"
     return args
 
@@ -5892,7 +5896,9 @@ def to_plottable(x: torch.Tensor) -> np.ndarray:
 
 def main():
     args = get_args()
-    print(args)
+    print(f"model type {args.model_type}")
+    print(f"model path {args.model_path}")
+    print(f"ImageNet directory {args.dir}")
     if args.seed:
         torch.manual_seed(args.seed)
         torch.backends.cudnn.deterministic = True
@@ -5906,9 +5912,9 @@ def main():
         ]
     )
     split = "val"
-    pathes = tuple((args.data_dir / split).iterdir())
+    pathes = tuple((args.dir / split).iterdir())
     pathes = [pathes[i:i + args.batch_size] for i in range(0, len(pathes), args.batch_size)]
-    xml_dir = args.data_dir.parents[1] / "Annotations" / "CLS-LOC" / split
+    xml_dir = args.dir.parents[1] / "Annotations" / "CLS-LOC" / split
     top1_correct = 0
     top5_correct = 0
     count = 0
