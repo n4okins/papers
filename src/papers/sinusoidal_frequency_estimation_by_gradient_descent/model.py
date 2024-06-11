@@ -13,7 +13,6 @@ import cv2
 import librosa
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -76,10 +75,9 @@ def get_power_max_frame(audio, frame_length, hop_length):
     return max_frame
 
 
-name = "a_1"
 resample = torchaudio.transforms.Resample(44100, 16000)
 
-for name in ["ka_1", "ki_1", "ku_1", "ke_1", "ko_1"]:
+for name in ["a_1", "i_1", "u_1", "e_1", "o_1"]:
     fig_dir = Path("figs")
     target_wave, sampling_rate = torchaudio.load(assets_dir / f"{name}.wav")
     fig_dir = fig_dir / name
