@@ -954,7 +954,7 @@ def main():
 
         pred_top5 = torch.topk(pred_prob.cpu(), 5)
         top1_correct += (pred_top5.indices[:, 0] == labels).sum().item()
-        top5_correct += sum(l in top5 for l, top5 in zip(labels, pred_top5.indices))
+        top5_correct += sum(label in top5 for label, top5 in zip(labels, pred_top5.indices))
         count += len(labels)
         top1_accuracy = top1_correct / count
         top5_accuracy = top5_correct / count
