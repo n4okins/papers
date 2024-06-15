@@ -14,3 +14,7 @@ wheels/
 assets/
 figs*/
 *.mp4
+
+**/data/
+**/dataset/
+**/datasets/
